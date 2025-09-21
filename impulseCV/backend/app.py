@@ -5,6 +5,7 @@ import threading
 import time
 from werkzeug.utils import secure_filename
 from physics_engine import PhysicsEngine
+from educational_physics_engine import EducationalPhysicsEngine
 from tracking_video_generator import process_video_with_tracking
 
 app = Flask(__name__)
@@ -26,6 +27,9 @@ processing_status = {
     "csv_file": None,
     "tracking_video": None
 }
+
+# Global educational data
+educational_data = None
 
 def convert_numpy_types(obj):
     """Convert NumPy types to Python types for JSON serialization"""
@@ -96,6 +100,21 @@ def process_video_background(video_path):
             
             # Generate advanced physics plots
             advanced_plots = physics_engine.generate_advanced_plots(df)
+            
+            # Generate educational analysis
+            global educational_data
+            educational_engine = EducationalPhysicsEngine(pixels_per_meter=50.0, object_mass=0.5)
+            educational_analysis = educational_engine.analyze_physics_concepts(df)
+            educational_explanations = educational_engine.generate_educational_explanations(df, educational_analysis)
+            educational_quiz = educational_engine.create_learning_quiz(df, educational_analysis)
+            educational_plots = educational_engine.generate_visual_learning_aids(df)
+            
+            educational_data = {
+                "analysis": educational_analysis,
+                "explanations": educational_explanations,
+                "quiz": educational_quiz,
+                "plots": educational_plots
+            }
         
         # Update status with results
         tracking_video_name = os.path.basename(tracking_video_path)
@@ -221,6 +240,15 @@ def serve_plot(filename):
         return send_file(plot_path)
     else:
         return jsonify({'error': 'Plot not found'}), 404
+
+@app.route('/educational_analysis')
+def get_educational_analysis():
+    """Get educational analysis data"""
+    global educational_data
+    if educational_data:
+        return jsonify(convert_numpy_types(educational_data))
+    else:
+        return jsonify({'error': 'No educational analysis available'}), 404
 
 if __name__ == '__main__':
     # Create necessary directories

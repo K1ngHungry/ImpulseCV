@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import LearningModule from './components/LearningModule';
+import PhysicsConceptLibrary from './components/PhysicsConceptLibrary';
+import StudentProgress from './components/StudentProgress';
 
 function App() {
   const [status, setStatus] = useState({ status: 'idle', progress: 0, message: 'Ready to upload video.' });
   const [videoFile, setVideoFile] = useState(null);
   const [processingIntervalId, setProcessingIntervalId] = useState(null);
+  const [currentTab, setCurrentTab] = useState('analyze');
+  const [educationalData, setEducationalData] = useState(null);
 
   const API_BASE_URL = 'http://localhost:8000';
 
@@ -12,6 +17,20 @@ function App() {
       const response = await fetch(`${API_BASE_URL}/status`);
       const data = await response.json();
       setStatus(data);
+      
+      // Fetch educational data when analysis is complete
+      if (data.status === 'completed' && !educationalData) {
+        try {
+          const eduResponse = await fetch(`${API_BASE_URL}/educational_analysis`);
+          if (eduResponse.ok) {
+            const eduData = await eduResponse.json();
+            setEducationalData(eduData);
+          }
+        } catch (error) {
+          console.log('Educational analysis not available yet');
+        }
+      }
+      
       if (data.status === 'completed' || data.status === 'error') {
         clearInterval(processingIntervalId);
         setProcessingIntervalId(null);
@@ -82,31 +101,109 @@ function App() {
       <header style={{ backgroundColor: '#2563eb', color: 'white', padding: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
-            🚀 ImpulseCV
+            🚀 ImpulseCV - Physics Learning Platform
           </h1>
           <nav>
             <ul style={{ display: 'flex', listStyle: 'none', gap: '1rem', margin: 0, padding: 0 }}>
-              <li><a href="#" style={{ color: 'white', textDecoration: 'none' }}>Features</a></li>
-              <li><a href="#" style={{ color: 'white', textDecoration: 'none' }}>Demo</a></li>
-              <li><a href="#" style={{ color: 'white', textDecoration: 'none' }}>About</a></li>
+              <li>
+                <button
+                  onClick={() => setCurrentTab('analyze')}
+                  style={{
+                    color: currentTab === 'analyze' ? '#fbbf24' : 'white',
+                    textDecoration: 'none',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: currentTab === 'analyze' ? 'bold' : 'normal'
+                  }}
+                >
+                  📹 Analyze
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setCurrentTab('learn')}
+                  style={{
+                    color: currentTab === 'learn' ? '#fbbf24' : 'white',
+                    textDecoration: 'none',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: currentTab === 'learn' ? 'bold' : 'normal'
+                  }}
+                >
+                  📚 Learn
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setCurrentTab('progress')}
+                  style={{
+                    color: currentTab === 'progress' ? '#fbbf24' : 'white',
+                    textDecoration: 'none',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: currentTab === 'progress' ? 'bold' : 'normal'
+                  }}
+                >
+                  📊 Progress
+                </button>
+              </li>
             </ul>
           </nav>
         </div>
       </header>
 
       <main style={{ flex: 1, maxWidth: '1200px', margin: '0 auto', padding: '2rem', width: '100%' }}>
-        {/* Hero Section */}
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
-            AI-Powered Physics Analysis
-          </h2>
-          <p style={{ fontSize: '1.125rem', color: '#6b7280', marginBottom: '2rem' }}>
-            Upload a video and watch AI analyze object motion with advanced physics calculations
-          </p>
-        </div>
+        {currentTab === 'analyze' && (
+          <>
+            {/* Hero Section */}
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
+                AI-Powered Physics Analysis
+              </h2>
+              <p style={{ fontSize: '1.125rem', color: '#6b7280', marginBottom: '2rem' }}>
+                Upload a video and watch AI analyze object motion with advanced physics calculations
+              </p>
+            </div>
+          </>
+        )}
 
-        {/* Upload Section */}
-        <div style={{ backgroundColor: 'white', borderRadius: '0.5rem', padding: '2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
+        {currentTab === 'learn' && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
+                Physics Learning Center
+              </h2>
+              <p style={{ fontSize: '1.125rem', color: '#6b7280', marginBottom: '2rem' }}>
+                Explore physics concepts, take quizzes, and enhance your understanding
+              </p>
+            </div>
+          </>
+        )}
+
+        {currentTab === 'progress' && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
+                Your Learning Journey
+              </h2>
+              <p style={{ fontSize: '1.125rem', color: '#6b7280', marginBottom: '2rem' }}>
+                Track your progress, unlock achievements, and see how much you've learned
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Tab Content */}
+        {currentTab === 'analyze' && (
+          <>
+            {/* Upload Section */}
+            <div style={{ backgroundColor: 'white', borderRadius: '0.5rem', padding: '2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 'semibold', color: '#1f2937', marginBottom: '1rem' }}>
             Upload Your Video
           </h3>
@@ -311,14 +408,39 @@ function App() {
           </div>
         )}
 
-        {/* Error State */}
-        {status.status === 'error' && (
-          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', padding: '1.5rem', marginBottom: '2rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 'semibold', color: '#dc2626', marginBottom: '0.5rem' }}>
-              ❌ Error
-            </h3>
-            <p style={{ color: '#dc2626' }}>{status.message}</p>
-          </div>
+            {/* Error State */}
+            {status.status === 'error' && (
+              <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', padding: '1.5rem', marginBottom: '2rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 'semibold', color: '#dc2626', marginBottom: '0.5rem' }}>
+                  ❌ Error
+                </h3>
+                <p style={{ color: '#dc2626' }}>{status.message}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {currentTab === 'learn' && (
+          <>
+            {/* Learning Module */}
+            {educationalData && (
+              <LearningModule 
+                analysis={educationalData.analysis}
+                explanations={educationalData.explanations}
+                quiz={educationalData.quiz}
+              />
+            )}
+            
+            {/* Physics Concept Library */}
+            <PhysicsConceptLibrary />
+          </>
+        )}
+
+        {currentTab === 'progress' && (
+          <>
+            {/* Student Progress */}
+            <StudentProgress />
+          </>
         )}
       </main>
 
