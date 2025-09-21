@@ -9,6 +9,7 @@ function App() {
   const [processingIntervalId, setProcessingIntervalId] = useState(null);
   const [currentTab, setCurrentTab] = useState('analyze');
   const [educationalData, setEducationalData] = useState(null);
+  const [motionExplanation, setMotionExplanation] = useState(null);
 
   const API_BASE_URL = 'http://localhost:8000';
 
@@ -28,6 +29,19 @@ function App() {
           }
         } catch (error) {
           console.log('Educational analysis not available yet');
+        }
+      }
+      
+      // Fetch motion explanation when analysis is complete
+      if (data.status === 'completed' && !motionExplanation) {
+        try {
+          const explanationResponse = await fetch(`${API_BASE_URL}/motion_explanation`);
+          if (explanationResponse.ok) {
+            const explanation = await explanationResponse.json();
+            setMotionExplanation(explanation.explanation);
+          }
+        } catch (error) {
+          console.log('Motion explanation not available yet');
         }
       }
       
@@ -316,32 +330,43 @@ function App() {
               🎉 Analysis Complete!
             </h3>
             
-            {/* Tracking Video Display */}
+            {/* Video and Motion Analysis Side by Side */}
             {status.tracking_video && (
-              <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontSize: '1.25rem', fontWeight: 'semibold', color: '#1f2937', marginBottom: '1rem' }}>
-                  🎥 AI Object Tracking Video
-                </h4>
-                <div style={{ borderRadius: '0.5rem', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                  <video
-                    controls
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="metadata"
-                    style={{ width: '100%', height: 'auto' }}
-                    src={`${API_BASE_URL}/${status.tracking_video}`}
-                    onError={(e) => {
-                      console.error('Video playback error:', e);
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
-                    }}
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                  <div style={{ display: 'none', padding: '2rem', textAlign: 'center', backgroundColor: '#f3f4f6', borderRadius: '0.5rem' }}>
-                    <p>Video playback not supported. You can download the video file directly.</p>
+              <div style={{ 
+                display: 'flex', 
+                gap: '2rem', 
+                marginBottom: '2rem', 
+                alignItems: 'flex-start',
+                flexWrap: 'wrap'
+              }}>
+                {/* Video Section */}
+                <div style={{ 
+                  flex: '2', 
+                  minWidth: '400px',
+                  '@media (max-width: 768px)': {
+                    minWidth: '100%'
+                  }
+                }}>
+                  <h4 style={{ fontSize: '1.25rem', fontWeight: 'semibold', color: '#1f2937', marginBottom: '1rem' }}>
+                    🎥 AI Object Tracking Video
+                  </h4>
+                  <div style={{ borderRadius: '0.5rem', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                    <video
+                      controls
+                      style={{ width: '100%', height: 'auto' }}
+                      src={`${API_BASE_URL}/${status.tracking_video}`}
+                      onError={(e) => {
+                        console.error('Video playback error:', e);
+                        console.error('Video src:', e.target.src);
+                      }}
+                      onLoadStart={() => console.log('Video loading started')}
+                      onCanPlay={() => console.log('Video can play')}
+                      onLoadedData={() => console.log('Video data loaded')}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
                     <a 
                       href={`${API_BASE_URL}/${status.tracking_video}`} 
                       download
@@ -351,16 +376,42 @@ function App() {
                         backgroundColor: '#2563eb', 
                         color: 'white', 
                         textDecoration: 'none', 
-                        borderRadius: '0.25rem' 
+                        borderRadius: '0.25rem',
+                        fontSize: '0.875rem'
                       }}
                     >
-                      Download Video
+                      📥 Download Video
                     </a>
                   </div>
+                  <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                    Watch the AI track objects in real-time with bounding boxes and trajectory trails
+                  </p>
                 </div>
-                <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                  Watch the AI track objects in real-time with bounding boxes and trajectory trails
-                </p>
+
+                {/* Motion Analysis Section */}
+                {motionExplanation && (
+                  <div style={{ 
+                    flex: '1', 
+                    minWidth: '300px',
+                    maxWidth: '400px'
+                  }}>
+                    <h4 style={{ fontSize: '1.25rem', fontWeight: 'semibold', color: '#1f2937', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                      📊 Motion Analysis
+                    </h4>
+                    <div style={{ 
+                      backgroundColor: '#f8fafc', 
+                      border: '1px solid #e2e8f0', 
+                      borderRadius: '0.5rem', 
+                      padding: '1.5rem',
+                      fontSize: '1rem',
+                      lineHeight: '1.6',
+                      color: '#374151',
+                      height: 'fit-content'
+                    }}>
+                      {motionExplanation}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
@@ -369,7 +420,7 @@ function App() {
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2563eb' }}>
                   {status.data_points || 0}
                 </div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Data Points</div>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Data Points (Cleaned)</div>
               </div>
               
               <div style={{ backgroundColor: '#f9fafb', padding: '1rem', borderRadius: '0.5rem' }}>
@@ -385,26 +436,56 @@ function App() {
                 </div>
                 <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Objects Tracked</div>
               </div>
+              
+              {status.cleaning_stats && Object.keys(status.cleaning_stats).length > 0 && (
+                <div style={{ backgroundColor: '#f9fafb', padding: '1rem', borderRadius: '0.5rem' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc2626' }}>
+                    {status.cleaning_stats.cleaning_percentage ? `${status.cleaning_stats.cleaning_percentage.toFixed(1)}%` : '0%'}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Outliers Removed</div>
+                </div>
+              )}
             </div>
 
-            {status.csv_file && (
-              <a
-                href={`${API_BASE_URL}/download/${status.csv_file}`}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  backgroundColor: '#2563eb',
-                  color: 'white',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.5rem',
-                  textDecoration: 'none',
-                  fontWeight: 'semibold'
-                }}
-              >
-                📥 Download CSV Data
-              </a>
-            )}
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+              {status.csv_file && (
+                <a
+                  href={`${API_BASE_URL}/download/${status.csv_file}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    backgroundColor: '#6b7280',
+                    color: 'white',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '0.5rem',
+                    textDecoration: 'none',
+                    fontWeight: 'semibold'
+                  }}
+                >
+                  📥 Download Original Data
+                </a>
+              )}
+              
+              {status.cleaned_csv_file && (
+                <a
+                  href={`${API_BASE_URL}/download_cleaned/${status.csv_file}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '0.5rem',
+                    textDecoration: 'none',
+                    fontWeight: 'semibold'
+                  }}
+                >
+                  🧹 Download Cleaned Data
+                </a>
+              )}
+            </div>
           </div>
         )}
 
