@@ -1,0 +1,9 @@
+ultralytics
+opencv-python
+flask
+flask-cors
+pandas
+matplotlib
+numpy<2.0
+scipy
+werkzeug
